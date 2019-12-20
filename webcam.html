@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Webcam</title>
+</head>
+<body>
+    <video id="camera" autoplay></video>
+    <canvas id="hiddenCanvas"></canvas>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+    //SocketIO
+    var socket;
+        //Canvas
+    const hiddenCanvas = document.querySelector("#hiddenCanvas");
+    const hiddenCtx = hiddenCanvas.getContext("2d");
+    //Camera
+    const camera = document.querySelector("#camera");
+
+    const constraints = {
+      audio: true,
+      video: {width: 150, height: 100}
+    };
+    //getMedia
+    const getMedia = async constraints => {
+      let stream = null, broadcaster = false;
+      stream = await navigator.mediaDevices.getUserMedia(constraints);
+      if (stream == null) {
+        camera.innerHTML = "No devices found! :(";
+      } else {
+        camera.srcObject = stream;
+        broadcaster = true;
+      }
+      //setSocket(broadcaster)
+    };
+
+    // const setSocket = broadcaster => {
+    //     if(broadcaster){
+    //         console.log('Broadcasting...')
+    //     }
+
+    //    socket = io()
+    // }
+
+    getMedia(constraints);
+    </script>
+</body>
+</html>
