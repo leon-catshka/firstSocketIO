@@ -5,27 +5,56 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Webcam</title>
+    <style>
+      #hiddenCanvas {
+        border: 1px solid black;
+        display: none;
+      }
+      #camera{
+        border: 1px solid salmon;
+      }
+      #usersContainer{
+        border: 1px solid mediumaquamarine;
+      }
+      #usersContainer > img{
+        border: 2px solid slategray;
+      }
+    </style>
 </head>
 <body>
     <video id="camera" autoplay></video>
     <canvas id="hiddenCanvas"></canvas>
-    <script src="/socket.io/socket.io.js"></script>
+    <div id="usersContainer"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.5/socket.io.min.js"></script>
     <script>
-    //SocketIO
+      //Variables
     var socket;
-        //Canvas
+    const id=uuidv4();
+    var users = [];
+    var stream = null, broadcaster = false;
+    var counter = 0, modulo = 1;
+    const constraints = {
+      audio: true,
+      video: {width: 300, height: 200}
+    };
+    //UID Generator
+    function uuidv4() {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
+    }
+    //Canvas
     const hiddenCanvas = document.querySelector("#hiddenCanvas");
     const hiddenCtx = hiddenCanvas.getContext("2d");
     //Camera
     const camera = document.querySelector("#camera");
+    //Users Container
+    const usersContainer = document.querySelector('#usersContainer');
 
-    const constraints = {
-      audio: true,
-      video: {width: 150, height: 100}
-    };
+
     //getMedia
-    const getMedia = async constraints => {
-      let stream = null, broadcaster = false;
+    const getMedia = async () => {
       stream = await navigator.mediaDevices.getUserMedia(constraints);
       if (stream == null) {
         camera.innerHTML = "No devices found! :(";
@@ -33,18 +62,39 @@
         camera.srcObject = stream;
         broadcaster = true;
       }
-      //setSocket(broadcaster)
+      setSocket()
     };
 
-    // const setSocket = broadcaster => {
-    //     if(broadcaster){
-    //         console.log('Broadcasting...')
-    //     }
+    const setSocket = () => {
+      socket = io();
+      socket.on('frameRecv', data => {
+        if(users.indexOf(data.uid) == -1){
+          users.push(data.uid);
+          usersContainer.innerHTML+=`<img id="${data.uid}"/>`
+        }
+        document.getElementById(data.uid).src = data.imgURL;
+      })
+      loop();
+    }
 
-    //    socket = io()
-    // }
+    const emitFrame = () => {
+      hiddenCanvas.width = camera.clientWidth;
+      hiddenCanvas.height = camera.clientHeight;
+      hiddenCtx.drawImage(camera, 0, 0);
+      //let cnvData = hiddenCtx.getImageData(0,0,hiddenCanvas.width,hiddenCanvas.height);
+      //socket.emit('frame', {imgData: cnvData.data, imgWidth: cnvData.width});
+      socket.emit('frame', {imgURL: hiddenCanvas.toDataURL('image/jpeg'), uid: id});
+    }
 
-    getMedia(constraints);
+    const loop = () => {
+      if(counter % modulo == 0){
+        if(broadcaster) emitFrame();
+      }
+      counter++;
+      requestAnimationFrame(loop);
+    }
+
+    getMedia();
     </script>
 </body>
 </html>
