@@ -22,7 +22,7 @@
     </style>
 </head>
 <body>
-    <video id="camera" autoplay></video>
+    <video id="camera"></video>
     <canvas id="hiddenCanvas"></canvas>
     <div id="usersContainer"></div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.4.5/socket.io.min.js"></script>
@@ -35,7 +35,7 @@
     var counter = 0, modulo = 20;
     const constraints = {
       audio: true,
-      video: {width: 300, height: 200}
+      video: {width: 150, height: 100}
     };
     //UID Generator
     function uuidv4() {
@@ -60,6 +60,7 @@
         camera.innerHTML = "No devices found! :(";
       } else {
         camera.srcObject = stream;
+        camera.play();
         broadcaster = true;
       }
       setSocket()
